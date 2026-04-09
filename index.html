@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact List — ช่างซ่อมและผู้ให้บริการ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f9;color:#222;font-size:13px}
+.header{background:#1B3A6B;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.header h1{font-size:15px;font-weight:700}
+.header p{font-size:11px;opacity:.7;margin-top:2px}
+.sync-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sync-btn{background:#fff;color:#1B3A6B;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+.sync-btn:hover{background:#e8f0ff}
+.sync-status{font-size:11px;color:rgba(255,255,255,.75)}
+.api-key-bar{background:#e8f0ff;border-bottom:1px solid #c0d4f5;padding:8px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.api-key-bar label{font-size:11px;font-weight:700;color:#1B3A6B;white-space:nowrap}
+.api-key-bar input{flex:1;min-width:200px;padding:5px 10px;border:1px solid #c0d4f5;border-radius:6px;font-size:12px;font-family:monospace;outline:none}
+.api-key-bar input:focus{border-color:#2E6DB4}
+.api-key-bar small{font-size:10px;color:#555;white-space:nowrap}
+.toolbar{background:#fff;border-bottom:1px solid #ddd;padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input{flex:1;min-width:180px;padding:7px 12px;border:1px solid #ccc;border-radius:20px;font-size:13px;outline:none}
+.toolbar input:focus{border-color:#2E6DB4}
+.filter-btn{padding:5px 12px;border-radius:16px;border:1px solid #ccc;background:#f4f4f4;color:#555;cursor:pointer;font-size:11px;font-weight:500;transition:all .15s;white-space:nowrap}
+.filter-btn.on{background:#2E6DB4;color:#fff;border-color:#2E6DB4}
+.count-label{font-size:11px;color:#888;margin-left:auto;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:16px 20px}
+.card{background:#fff;border-radius:12px;border:1px solid #e0e7ff;overflow:hidden;transition:box-shadow .15s}
+.card:hover{box-shadow:0 3px 12px rgba(46,109,180,.12)}
+.card.hidden{display:none}
+.card-head{padding:12px 14px;display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid #f0f4ff}
+.avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;font-weight:700}
+.av-inhouse{background:#e8f5e9;color:#2e7d32}
+.av-freelance{background:#e3f2fd;color:#1565c0}
+.av-company{background:#f3e5f5;color:#6a1b9a}
+.av-other{background:#fff8e1;color:#f57f17}
+.card-title{flex:1;min-width:0}
+.card-company{font-weight:700;font-size:12px;color:#1B3A6B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-scope{font-size:11px;color:#555;margin-top:2px;line-height:1.4}
+.area-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-top:3px;background:#e8f0ff;color:#2E6DB4}
+.card-body{padding:10px 14px}
+.contact-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.contact-row:not(:last-child){border-bottom:1px solid #f5f5f5}
+.c-label{font-size:10px;color:#aaa;width:50px;flex-shrink:0;font-weight:700;text-transform:uppercase}
+.c-name{font-size:12px;font-weight:700;color:#222;flex:1}
+.c-phone{font-size:12px;color:#1B3A6B;font-weight:700}
+.call-btn{background:#e8f5e9;color:#2e7d32;border:none;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-block}
+.call-btn:hover{background:#c8e6c9}
+.card-foot{padding:8px 14px;background:#fafcff;border-top:1px solid #f0f4ff}
+.bank-row{display:flex;align-items:center;gap:6px;font-size:11px}
+.bank-label{color:#888;font-weight:700;text-transform:uppercase;font-size:9px;width:60px}
+.bank-val{color:#333}
+.bank-copy{background:#e3f2fd;color:#1565c0;border:none;border-radius:5px;padding:1px 7px;font-size:10px;cursor:pointer;font-weight:700}
+.notes-row{font-size:11px;color:#888;font-style:italic;margin-top:4px;padding-top:4px;border-top:1px solid #f0f0f0}
+.no-result{text-align:center;padding:60px 20px;color:#aaa;grid-column:1/-1}
+.no-result .ico{font-size:40px;margin-bottom:10px}
+.loading{text-align:center;padding:60px 20px;color:#888;grid-column:1/-1}
+.spinner{width:32px;height:32px;border:3px solid #e0e7ff;border-top-color:#2E6DB4;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-box{background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;padding:12px 16px;margin:12px 20px;font-size:12px;color:#b71c1c}
+.err-box b{display:block;margin-bottom:4px}
+.source-badge{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700}
+.src-sheet{background:#e8f5e9;color:#2e7d32}
+.src-local{background:#fff8e1;color:#e65100}
+.action-btn{background:#2E6DB4;color:#fff;border:none;border-radius:16px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.action-btn:hover{filter:brightness(.95)}
+.icon-btn{background:#eef3ff;color:#1B3A6B;border:1px solid #d7e2ff;border-radius:8px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer}
+.icon-btn:hover{background:#dde8ff}
+.icon-btn.danger{background:#ffebee;color:#b71c1c;border-color:#ffcdd2}
+.icon-btn.danger:hover{background:#ffcdd2}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
+.modal{background:#fff;border-radius:12px;max-width:520px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.2);border:1px solid #e0e7ff;overflow:hidden}
+.modal-head{padding:12px 14px;background:#1B3A6B;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.modal-title{font-size:13px;font-weight:700}
+.modal-body{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-body label{font-size:10px;font-weight:700;color:#1B3A6B}
+.modal-body input,.modal-body textarea{width:100%;padding:7px 10px;border:1px solid #c0d4f5;border-radius:8px;font-size:12px;outline:none}
+.modal-body input:focus,.modal-body textarea:focus{border-color:#2E6DB4}
+.modal-body textarea{grid-column:1/-1;min-height:70px;resize:vertical}
+.modal-foot{padding:10px 14px;border-top:1px solid #f0f4ff;display:flex;gap:8px;justify-content:flex-end;background:#fafcff}
+.btn-secondary{background:#f4f4f4;color:#555;border:1px solid #ccc;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-primary{background:#2E6DB4;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-primary:hover{filter:brightness(.95)}
+
+/* Tag styles for Multi-select */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #c0d4f5;
+  border-radius: 8px;
+  background: #fff;
+  min-height: 38px;
+  align-items: center;
+  cursor: text;
+}
+.tag-container:focus-within {
+  border-color: #2E6DB4;
+}
+.tag {
+  background: #e8f0ff;
+  color: #2E6DB4;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag .remove {
+  cursor: pointer;
+  font-weight: bold;
+  color: #b71c1c;
+}
+.tag-input {
+  border: none !important;
+  padding: 2px 4px !important;
+  flex: 1;
+  min-width: 50px;
+  outline: none !important;
+}
+.dropdown-suggestions {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  width: 100%;
+  display: none;
+  margin-top: 2px;
+}
+.suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.suggestion-item:hover {
+  background: #f0f4ff;
+}
+.suggestion-item.add-new {
+  border-top: 1px solid #eee;
+  color: #2E6DB4;
+  font-weight: bold;
+}
+.relative-container {
+  position: relative;
+  grid-column: span 1;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📋 Contact List — ช่างซ่อมและผู้ให้บริการ</h1>
+    <p>ข้อมูลดึงจาก Google Sheets | Sheet ID: 1dBolcUEme_3AXNnPMxWj-QtXtbt1Yc05vbmfWMTElCs</p>
+  </div>
+  <div class="sync-row">
+    <span class="source-badge src-local" id="sourceBadge">Local Data</span>
+    <span class="sync-status" id="syncStatus">ยังไม่ได้ซิงค์</span>
+    <button class="sync-btn" onclick="loadFromSheet()">⟳ ซิงค์จาก Google Sheets</button>
+  </div>
+</div>
+
+<div class="api-key-bar" id="apiKeyBar" style="display:none">
+  <label>🔑 Google API Key:</label>
+  <input type="password" id="apiKeyInput" placeholder="ใส่ Google Sheets API Key ที่นี่..." oninput="saveKey()">
+  <small>
+    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#2E6DB4">สร้าง API Key</a>
+    → เปิดใช้ Google Sheets API → ใส่ Key → กด ซิงค์
+  </small>
+</div>
+
+<div id="errBox" style="display:none" class="err-box">
+  <b id="errTitle">เกิดข้อผิดพลาด</b>
+  <span id="errMsg"></span>
+</div>
+
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="ค้นหาชื่อ บริษัท เบอร์โทร หรืองาน..." oninput="render()">
+  <button class="action-btn" onclick="openCreate()">＋ เพิ่มรายการ</button>
+  <button class="filter-btn on" data-area="all" onclick="setArea('all',this)">ทั้งหมด</button>
+  <button class="filter-btn" data-area="58 Place" onclick="setArea('58 Place',this)">58 Place</button>
+  <button class="filter-btn" data-area="Empire Place" onclick="setArea('Empire Place',this)">Empire Place</button>
+  <button class="filter-btn" data-area="Maxim Pattaya" onclick="setArea('Maxim Pattaya',this)">Maxim Pattaya</button>
+  <button class="filter-btn" data-area="All Area" onclick="setArea('All Area',this)">All Area</button>
+  <span class="count-label" id="countLabel">0 รายการ</span>
+</div>
+
+<div class="grid" id="grid">
+  <div class="loading"><div class="spinner"></div>กำลังโหลดข้อมูล...</div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" onclick="backdropClose(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">เพิ่มรายการ</div>
+      <button class="icon-btn" onclick="closeModal()">ปิด</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label>Company</label>
+        <input id="fCompany" placeholder="บริษัท/ทีมงาน">
+      </div>
+      <div class="relative-container">
+        <label>Area</label>
+        <div id="areaTags" class="tag-container" onclick="focusInput('fAreaInput')">
+          <input id="fAreaInput" class="tag-input" placeholder="เช่น 58 Place" oninput="showSuggestions('area')" onkeydown="handleTagKey(event, 'area')" onfocus="showSuggestions('area')">
+        </div>
+        <div id="areaSuggestions" class="dropdown-suggestions"></div>
+        <input type="hidden" id="fArea">
+      </div>
+      <div class="relative-container">
+        <label>Scope</label>
+        <div id="scopeTags" class="tag-container" onclick="focusInput('fScopeInput')">
+          <input id="fScopeInput" class="tag-input" placeholder="เช่น ช่างแอร์" oninput="showSuggestions('scope')" onkeydown="handleTagKey(event, 'scope')" onfocus="showSuggestions('scope')">
+        </div>
+        <div id="scopeSuggestions" class="dropdown-suggestions"></div>
+        <input type="hidden" id="fScope">
+      </div>
+      <div>
+        <label>Name 1</label>
+        <input id="fName1" placeholder="ผู้ติดต่อ 1">
+      </div>
+      <div>
+        <label>Phone 1</label>
+        <input id="fPhone1" placeholder="เบอร์โทร 1">
+      </div>
+      <div>
+        <label>Name 2</label>
+        <input id="fName2" placeholder="ผู้ติดต่อ 2">
+      </div>
+      <div>
+        <label>Phone 2</label>
+        <input id="fPhone2" placeholder="เบอร์โทร 2">
+      </div>
+      <div>
+        <label>Bank</label>
+        <input id="fBank" placeholder="ธนาคาร">
+      </div>
+      <div>
+        <label>Account Name</label>
+        <input id="fAccName" placeholder="ชื่อบัญชี">
+      </div>
+      <div>
+        <label>Account No</label>
+        <input id="fAccNo" placeholder="เลขบัญชี">
+      </div>
+      <div>
+        <label>Bill</label>
+        <input id="fBill" placeholder="ข้อมูลบิล/ภาษี">
+      </div>
+      <textarea id="fNotes" placeholder="Notes"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-primary" onclick="submitModal()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1dBolcUEme_3AXNnPMxWj-QtXtbt1Yc05vbmfWMTElCs';
+const SHEET_NAME = 'Contact ช่างซ่อม';
+const API_BASE = '';
+
+// ── LOCAL FALLBACK DATA (from CSV) ──────────────────────────────────────────
+const LOCAL_DATA = [
+  {company:"บริษัท สกายลิฟต์",area:"58 Place",scope:"ลิฟต์",name1:"คุณเบล",phone1:"082-688-3038",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:"10,000 ต่อปี"},
+  {company:"IN-HOUSE",area:"58 Place",scope:"ดูแลอาคาร",name1:"คุณเหมี่ยว",phone1:"085-056-9801",name2:"",phone2:"",bill:"",account_name:"อังคณา เดือนฉาย",bank:"SCB",account_no:"119-2-28885-3",notes:""},
+  {company:"ช่างแอร์",area:"58 Place",scope:"ช่างแอร์",name1:"เฮียมนชัย",phone1:"081-919-5486",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"ช่างอินเตอร์เน็ต / กล้องวงจร",area:"58 Place, Empire Place",scope:"CCTV, WIFI",name1:"คุณตั้ง",phone1:"089-758-0691",name2:"",phone2:"",bill:"",account_name:"ปราชญะ ศิริไข",bank:"Kbank",account_no:"744-2-42772-5",notes:""},
+  {company:"LG",area:"",scope:"เครื่องซักผ้า",name1:"ช่างเครื่องซักผ้า",phone1:"094-404-6266",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:"เบอร์จากคุณเหมี่ยว"},
+  {company:"Freelance",area:"58 Place",scope:"ช่างกุญแจ",name1:"คุณปอย",phone1:"087-563-8852",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"ช่างแอร์ด่วน",area:"58 Place, Empire Place",scope:"ช่างแอร์",name1:"ช่างแอร์ 24ชม.",phone1:"093-558-5664",name2:"",phone2:"064-862-6424",bill:"",account_name:"",bank:"",account_no:"",notes:"ติดต่อใหม่"},
+  {company:"ช่างล้างแอร์",area:"58 Place",scope:"ช่างแอร์",name1:"ช่างโชคดี",phone1:"089-132-2101",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:"58 Place"},
+  {company:"Freelance",area:"",scope:"ประตูแม่เหล็ก",name1:"ช่างอุ้ย",phone1:"089-6558234",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"Freelance",area:"",scope:"ช่างประตู, งานซ่อม, ช่างประปา",name1:"คุณคงกระพัน",phone1:"0625072349",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:"ช่างประตู / เปลี่ยนมิเตอร์น้ำ"},
+  {company:"AP Service",area:"",scope:"เครื่องซักผ้า",name1:"ช่างเอก",phone1:"099-4254774",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"ช่างเดินสายไฟ",area:"",scope:"งานไฟฟ้า",name1:"รวมช่างโฮมเซอร์วิส",phone1:"093-0655329",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"ช่างเจาะผนัง/ทาสี",area:"58 Place, Empire Place",scope:"งานสี, งานปูน, งานปูกระเบื้อง, ช่างประตู",name1:"ช่างแบงค์",phone1:"061-6076610",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"บริษัท เอสอีที ซัคเซสส์ชั่น จำกัด",area:"",scope:"ช่างโรยตัว",name1:"SET Succession",phone1:"086-615-3561",name2:"",phone2:"083-599-8121",bill:"บ. เอสอีที ซัคเซสส์ชั่น จำกัด | TAX: 0105558080751 | www.setsuccession.com",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"IN-HOUSE",area:"Empire Place",scope:"ช่างประปา",name1:"คุณชัยรัตน์",phone1:"0967947159",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:"Empire"},
+  {company:"Freelance",area:"All Area",scope:"Consult งานก่อสร้าง",name1:"คุณต้น",phone1:"0649823395",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"ผู้รับเหมา",area:"Empire Place, Maxim Pattaya",scope:"",name1:"คุณตอง",phone1:"0611936524",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"IN-HOUSE",area:"All Area",scope:"ช่างอาคาร",name1:"คุณเปรม",phone1:"0660200287",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"IN-HOUSE",area:"All Area",scope:"",name1:"คุณพิมพ์",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"IN-HOUSE",area:"All Area",scope:"",name1:"คุณนิ้ง",phone1:"0955851914",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"Freelance",area:"Empire Place",scope:"งานไม้, งานซ่อม, งานไฟฟ้า, ช่างแอร์, งานปูน",name1:"คุณนิด",phone1:"0839439744",name2:"",phone2:"",bill:"",account_name:"วีระพร",bank:"กรุงไทย",account_no:"0970329008",notes:""},
+  {company:"IN-HOUSE",area:"Empire Place",scope:"ดูแลอาคาร",name1:"คุณเค้ก",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"IN-HOUSE",area:"Maxim Pattaya",scope:"ดูแลอาคาร, Cleaning",name1:"คุณนุ้ย",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"Freelance",area:"Empire Place, 58 Place",scope:"ดูแลอาคาร",name1:"คุณนุช",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"บริษัท เบสท์ อินเวสติเกชั่น จำกัด",area:"Empire Place",scope:"Cleaning",name1:"Best",phone1:"",name2:"",phone2:"",bill:"บ. เบสท์ อินเวสติเกชั่น จำกัด | TAX: 0405538000091",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"บริษัท อินเนอร์ คอนสตรัคชั่น จำกัด",area:"Empire Place",scope:"ช่างเฟอร์, ช่างประตู",name1:"คุณปาร์ค",phone1:"",name2:"",phone2:"",bill:"บ. อินเนอร์ คอนสตรัคชั่น จำกัด | TAX: 0125566003612 | บางบัวทอง นนทบุรี",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"Wash Enjoy",area:"",scope:"เครื่องซักผ้า",name1:"",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"Wash Enjoy",area:"Empire Place",scope:"งานป้าย",name1:"คุณรุ้ง",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"Freelance",area:"Empire Place, 58 Place",scope:"ช่างแอร์",name1:"ช่างเตี้ยง",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""},
+  {company:"IN-HOUSE",area:"58 Place",scope:"ดูแลอาคาร",name1:"โม",phone1:"",name2:"",phone2:"",bill:"",account_name:"",bank:"",account_no:"",notes:""}
+];
+
+let currentData = [...LOCAL_DATA];
+let currentArea = 'all';
+let modalEditingId = null;
+
+// Multi-select persistence
+let customOptions = {
+  area: JSON.parse(localStorage.getItem('custom_areas') || '["58 Place", "Empire Place", "Maxim Pattaya", "All Area"]'),
+  scope: JSON.parse(localStorage.getItem('custom_scopes') || '["ช่างแอร์", "ช่างประปา", "งานไฟฟ้า", "Cleaning"]')
+};
+
+function saveCustomOptions() {
+  localStorage.setItem('custom_areas', JSON.stringify(customOptions.area));
+  localStorage.setItem('custom_scopes', JSON.stringify(customOptions.scope));
+}
+
+function focusInput(id) {
+  document.getElementById(id).focus();
+}
+
+function handleTagKey(e, type) {
+  const input = e.target;
+  const val = input.value.trim();
+  if (e.key === 'Enter' && val) {
+    e.preventDefault();
+    addTag(type, val);
+    input.value = '';
+    hideSuggestions(type);
+  } else if (e.key === 'Backspace' && !val) {
+    removeLastTag(type);
+  }
+}
+
+function addTag(type, val) {
+  if (!val) return;
+  const hiddenInput = document.getElementById(type === 'area' ? 'fArea' : 'fScope');
+  let current = hiddenInput.value ? hiddenInput.value.split(',').map(s => s.trim()) : [];
+  if (!current.includes(val)) {
+    current.push(val);
+    hiddenInput.value = current.join(', ');
+    
+    // Add to custom options if not exists
+    if (!customOptions[type].includes(val)) {
+      customOptions[type].push(val);
+      saveCustomOptions();
+    }
+    
+    renderTags(type);
+  }
+}
+
+function removeTag(type, val) {
+  const hiddenInput = document.getElementById(type === 'area' ? 'fArea' : 'fScope');
+  let current = hiddenInput.value ? hiddenInput.value.split(',').map(s => s.trim()) : [];
+  current = current.filter(t => t !== val);
+  hiddenInput.value = current.join(', ');
+  renderTags(type);
+}
+
+function removeLastTag(type) {
+  const hiddenInput = document.getElementById(type === 'area' ? 'fArea' : 'fScope');
+  let current = hiddenInput.value ? hiddenInput.value.split(',').map(s => s.trim()) : [];
+  if (current.length > 0) {
+    current.pop();
+    hiddenInput.value = current.join(', ');
+    renderTags(type);
+  }
+}
+
+function renderTags(type) {
+  const container = document.getElementById(type + 'Tags');
+  const input = document.getElementById(type === 'area' ? 'fAreaInput' : 'fScopeInput');
+  const hiddenInput = document.getElementById(type === 'area' ? 'fArea' : 'fScope');
+  const current = hiddenInput.value ? hiddenInput.value.split(',').map(s => s.trim()) : [];
+  
+  // Keep the input
+  const existingTags = container.querySelectorAll('.tag');
+  existingTags.forEach(t => t.remove());
+  
+  current.forEach(val => {
+    if(!val) return;
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${escapeHtml(val)} <span class="remove" onclick="event.stopPropagation(); removeTag('${type}', '${escapeJsString(val)}')">×</span>`;
+    container.insertBefore(tag, input);
+  });
+}
+
+function showSuggestions(type) {
+  const input = document.getElementById(type === 'area' ? 'fAreaInput' : 'fScopeInput');
+  const suggestionsBox = document.getElementById(type + 'Suggestions');
+  const val = input.value.toLowerCase().trim();
+  const hiddenInput = document.getElementById(type === 'area' ? 'fArea' : 'fScope');
+  const currentTags = hiddenInput.value ? hiddenInput.value.split(',').map(s => s.trim()) : [];
+
+  let filtered = customOptions[type].filter(opt => 
+    opt.toLowerCase().includes(val) && !currentTags.includes(opt)
+  );
+
+  suggestionsBox.innerHTML = '';
+  if (filtered.length > 0 || val) {
+    filtered.forEach(opt => {
+      const item = document.createElement('div');
+      item.className = 'suggestion-item';
+      item.textContent = opt;
+      item.onclick = () => {
+        addTag(type, opt);
+        input.value = '';
+        hideSuggestions(type);
+      };
+      suggestionsBox.appendChild(item);
+    });
+
+    if (val && !customOptions[type].includes(val)) {
+      const addNew = document.createElement('div');
+      addNew.className = 'suggestion-item add-new';
+      addNew.textContent = `+ เพิ่ม "${val}"`;
+      addNew.onclick = () => {
+        addTag(type, val);
+        input.value = '';
+        hideSuggestions(type);
+      };
+      suggestionsBox.appendChild(addNew);
+    }
+    suggestionsBox.style.display = 'block';
+  } else {
+    suggestionsBox.style.display = 'none';
+  }
+}
+
+function hideSuggestions(type) {
+  setTimeout(() => {
+    document.getElementById(type + 'Suggestions').style.display = 'none';
+  }, 200);
+}
+
+// Close suggestions when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.relative-container')) {
+    document.querySelectorAll('.dropdown-suggestions').forEach(s => s.style.display = 'none');
+  }
+});
+
+function saveKey(){
+  const v = document.getElementById('apiKeyInput').value || '';
+  localStorage.setItem('sheets_api_key', v);
+}
+function loadKey(){
+  return localStorage.getItem('sheets_api_key') || '';
+}
+
+function showErr(title, msg){
+  document.getElementById('errTitle').textContent = title;
+  document.getElementById('errMsg').textContent = msg;
+  document.getElementById('errBox').style.display = 'block';
+}
+function hideErr(){ document.getElementById('errBox').style.display = 'none'; }
+
+function escapeHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function escapeJsString(s){
+  return String(s == null ? '' : s)
+    .replace(/\\/g,'\\\\')
+    .replace(/'/g,"\\'")
+    .replace(/\r/g,'\\r')
+    .replace(/\n/g,'\\n')
+    .replace(/\u2028/g,'\\u2028')
+    .replace(/\u2029/g,'\\u2029');
+}
+
+async function loadFromSheet(){
+  hideErr();
+  document.getElementById('syncStatus').textContent = 'กำลังซิงค์...';
+  document.getElementById('grid').innerHTML = '<div class="loading"><div class="spinner"></div>กำลังดึงข้อมูลจาก Google Sheets...</div>';
+
+  try {
+    const apiRes = await fetch(API_BASE + '/api/contacts');
+    const apiJson = await apiRes.json();
+    if(!apiRes.ok || !apiJson || apiJson.ok !== true){
+      throw new Error((apiJson && apiJson.error) ? apiJson.error : 'โหลดข้อมูลไม่สำเร็จ');
+    }
+    currentData = (apiJson.data || []).filter(r => r.company || r.name1);
+    document.getElementById('syncStatus').textContent = 'ซิงค์แล้ว ' + new Date().toLocaleTimeString('th-TH') + ' — ' + currentData.length + ' รายการ';
+    document.getElementById('sourceBadge').textContent = 'Google Sheets Live';
+    document.getElementById('sourceBadge').className = 'source-badge src-sheet';
+    document.getElementById('apiKeyBar').style.display = 'none';
+    render();
+    return;
+
+    const key = loadKey();
+    if(!key){
+      document.getElementById('apiKeyBar').style.display = 'flex';
+      throw new Error('ยังไม่ได้ใส่ Google Sheets API Key');
+    }
+
+    const sheetNameEncoded = encodeURIComponent(SHEET_NAME);
+    const url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + sheetNameEncoded + '?key=' + key;
+
+    const res = await fetch(url);
+    const json = await res.json();
+    if(json.error) throw new Error(String(json.error.code) + ': ' + String(json.error.message));
+
+    const rows = json.values || [];
+    if(rows.length < 2) throw new Error('ไม่พบข้อมูลใน Sheet');
+
+    const headers = rows[0];
+    const idx = (name) => headers.findIndex(h => String(h||'').toLowerCase().includes(name.toLowerCase()));
+    const iCompany = idx('company');
+    const iArea    = idx('area');
+    const iScope   = idx('scope');
+    const iName1   = idx('name 1');
+    const iPhone1  = idx('phone 1');
+    const iName2   = idx('name 2');
+    const iPhone2  = idx('phone 2');
+    const iBill    = idx('บิล');
+    const iAccName = idx('ชื่อบัญชี');
+    const iBank    = idx('ธนาคาร');
+    const iAccNo   = idx('เลขบัญชี');
+    const iNotes   = idx('notes');
+
+    const g = (row, i) => (i >= 0 && row[i]) ? String(row[i]).trim() : '';
+    currentData = rows.slice(1).map(row => ({
+      id: '',
+      company:      g(row, iCompany),
+      area:         g(row, iArea),
+      scope:        g(row, iScope),
+      name1:        g(row, iName1),
+      phone1:       g(row, iPhone1),
+      name2:        g(row, iName2),
+      phone2:       g(row, iPhone2),
+      bill:         g(row, iBill),
+      account_name: g(row, iAccName),
+      bank:         g(row, iBank),
+      account_no:   g(row, iAccNo),
+      notes:        g(row, iNotes)
+    })).filter(r => r.company || r.name1);
+
+    document.getElementById('syncStatus').textContent = 'ซิงค์แล้ว ' + new Date().toLocaleTimeString('th-TH') + ' — ' + currentData.length + ' รายการ';
+    document.getElementById('sourceBadge').textContent = 'Google Sheets Live';
+    document.getElementById('sourceBadge').className = 'source-badge src-sheet';
+    render();
+
+  } catch(e){
+    showErr('ซิงค์ไม่สำเร็จ', e.message + ' — ตรวจสอบ API Key และชื่อ Sheet ให้ถูกต้อง');
+    document.getElementById('syncStatus').textContent = 'ซิงค์ล้มเหลว — แสดงข้อมูลสำรอง';
+    currentData = [...LOCAL_DATA];
+    render();
+  }
+}
+
+function getAvatar(c){
+  const t = (c.company||'').toLowerCase();
+  if(t.includes('in-house')) return {cls:'av-inhouse', ico:'🏠'};
+  if(t.includes('freelance')) return {cls:'av-freelance', ico:'🔧'};
+  if(t.startsWith('บริษัท') || t.includes('co.,') || t.includes('company'))
+    return {cls:'av-company', ico:'🏢'};
+  return {cls:'av-other', ico:'🛠'};
+}
+
+function areaMatch(contactArea, filterArea){
+  if(filterArea === 'all') return true;
+  if(!contactArea) return false;
+  const parts = contactArea.split(',').map(s => s.trim());
+  return parts.some(p => p.toLowerCase() === filterArea.toLowerCase() ||
+    p.toLowerCase() === 'all area');
+}
+
+function setArea(area, btn){
+  currentArea = area;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
+function phoneLink(phone){
+  const clean = phone.replace(/[-\s]/g,'');
+  return '<a href="tel:' + clean + '" class="call-btn">📞 โทร</a>';
+}
+
+function copyText(text, btn){
+  const ok = () => {
+    if (!btn) return;
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = 'คัดลอก', 2000);
+  };
+
+  const fallback = () => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = String(text || '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.left = '-1000px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (success) ok();
+    } catch (e) {}
+  };
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(String(text || '')).then(ok).catch(fallback);
+    } else {
+      fallback();
+    }
+  } catch (e) {
+    fallback();
+  }
+}
+
+function render(){
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  const filtered = currentData.filter(c => {
+    const matchArea = areaMatch(c.area, currentArea);
+    if(!matchArea) return false;
+    if(!q) return true;
+    const haystack = [c.company, c.area, c.scope, c.name1, c.phone1,
+                      c.name2, c.phone2, c.notes].join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
+
+  document.getElementById('countLabel').textContent = 'แสดง ' + filtered.length + ' รายการ';
+
+  if(filtered.length === 0){
+    grid.innerHTML = '<div class="no-result"><div class="ico">🔍</div>ไม่พบรายการที่ค้นหา</div>';
+    return;
+  }
+
+  filtered.forEach((c, idx) => {
+    const av = getAvatar(c);
+    const hasBank = c.bank || c.account_no || c.account_name;
+    const hasNotes = c.notes || c.bill;
+    const hasId = Boolean(c.id);
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    // HEAD
+    const scopeHtml = c.scope ? escapeHtml(c.scope) : '<span style="color:#aaa">ไม่ระบุงาน</span>';
+    const areaHtml = c.area ? '<span class="area-badge">' + escapeHtml(c.area) + '</span>' : '';
+    const actionsHtml = hasId
+      ? '<div style="display:flex;gap:6px;align-items:flex-start">'
+        + '<button class="icon-btn" onclick="openEdit(\'' + escapeJsString(c.id) + '\')">แก้ไข</button>'
+        + '<button class="icon-btn danger" onclick="deleteById(\'' + escapeJsString(c.id) + '\')">ลบ</button>'
+        + '</div>'
+      : '';
+    let headHtml = ''
+      + '<div class="card-head">'
+      +   '<div class="avatar ' + av.cls + '">' + av.ico + '</div>'
+      +   '<div class="card-title">'
+      +     '<div class="card-company">' + escapeHtml(c.company || '—') + '</div>'
+      +     '<div class="card-scope">' + scopeHtml + '</div>'
+      +     areaHtml
+      +   '</div>'
+      +   actionsHtml
+      + '</div>';
+
+    // BODY — contacts
+    let bodyHtml = '<div class="card-body">';
+    if(c.name1 || c.phone1){
+      bodyHtml += ''
+        + '<div class="contact-row">'
+        +   '<span class="c-label">ผู้ติดต่อ</span>'
+        +   '<span class="c-name">' + escapeHtml(c.name1 || '—') + '</span>'
+        +   (c.phone1 ? '<span class="c-phone">' + escapeHtml(c.phone1) + '</span>' + phoneLink(c.phone1) : '')
+        + '</div>';
+    }
+    if(c.name2 || c.phone2){
+      bodyHtml += ''
+        + '<div class="contact-row">'
+        +   '<span class="c-label">ผู้ติดต่อ 2</span>'
+        +   '<span class="c-name">' + escapeHtml(c.name2 || '—') + '</span>'
+        +   (c.phone2 ? '<span class="c-phone">' + escapeHtml(c.phone2) + '</span>' + phoneLink(c.phone2) : '')
+        + '</div>';
+    }
+    if(!c.name1 && !c.phone1 && !c.name2 && !c.phone2){
+      bodyHtml += '<div class="contact-row" style="color:#aaa;font-size:11px">ยังไม่มีข้อมูลติดต่อ</div>';
+    }
+    bodyHtml += '</div>';
+
+    // FOOT — bank + notes
+    let footHtml = '';
+    if(hasBank || hasNotes){
+      footHtml = '<div class="card-foot">';
+      if(hasBank){
+        const acctId = 'acct_' + idx;
+        const bankText = [c.account_name, c.bank, c.account_no].filter(Boolean).join(' · ');
+        footHtml += ''
+          + '<div class="bank-row">'
+          +   '<span class="bank-label">บัญชี</span>'
+          +   '<span class="bank-val">' + escapeHtml(bankText) + '</span>'
+          +   (c.account_no ? '<button class="bank-copy" id="' + acctId + '" onclick="copyText(\'' + escapeJsString(c.account_no) + '\', document.getElementById(\'' + acctId + '\'))">คัดลอก</button>' : '')
+          + '</div>';
+      }
+      if(c.notes){
+        footHtml += '<div class="notes-row">📝 ' + escapeHtml(c.notes) + '</div>';
+      }
+      if(c.bill && !c.notes){
+        const shortBill = String(c.bill).substring(0,80) + (String(c.bill).length > 80 ? '...' : '');
+        footHtml += '<div class="notes-row">🧾 ' + escapeHtml(shortBill) + '</div>';
+      }
+      footHtml += '</div>';
+    }
+
+    card.innerHTML = headHtml + bodyHtml + footHtml;
+    grid.appendChild(card);
+  });
+}
+
+function openCreate(){
+  modalEditingId = null;
+  document.getElementById('modalTitle').textContent = 'เพิ่มรายการ';
+  setFormValues({});
+  openModal();
+}
+
+function openEdit(id){
+  const found = currentData.find(x => x.id === id);
+  if(!found){
+    showErr('ไม่พบรายการ', 'ไม่พบข้อมูลที่ต้องการแก้ไข');
+    return;
+  }
+  modalEditingId = id;
+  document.getElementById('modalTitle').textContent = 'แก้ไขรายการ';
+  setFormValues(found);
+  openModal();
+}
+
+function deleteById(id){
+  if(!confirm('ต้องการลบรายการนี้หรือไม่?')) return;
+  hideErr();
+  fetch(API_BASE + '/api/contacts?id=' + encodeURIComponent(id), { method: 'DELETE' })
+    .then(r => r.json().catch(() => null).then(j => ({ ok: r.ok, json: j })))
+    .then(({ ok, json }) => {
+      if(!ok || !json || json.ok !== true){
+        throw new Error((json && json.error) ? json.error : 'ลบไม่สำเร็จ');
+      }
+      loadFromSheet();
+    })
+    .catch((err) => showErr('ลบไม่สำเร็จ', String(err && err.message ? err.message : err)));
+}
+
+function openModal(){
+  document.getElementById('modalBackdrop').style.display = 'flex';
+}
+
+function closeModal(){
+  document.getElementById('modalBackdrop').style.display = 'none';
+}
+
+function backdropClose(e){
+  if(e.target && e.target.id === 'modalBackdrop') closeModal();
+}
+
+function setFormValues(c){
+  document.getElementById('fCompany').value = c.company || '';
+  document.getElementById('fArea').value = c.area || '';
+  document.getElementById('fScope').value = c.scope || '';
+  renderTags('area');
+  renderTags('scope');
+  document.getElementById('fAreaInput').value = '';
+  document.getElementById('fScopeInput').value = '';
+  document.getElementById('fName1').value = c.name1 || '';
+  document.getElementById('fPhone1').value = c.phone1 || '';
+  document.getElementById('fName2').value = c.name2 || '';
+  document.getElementById('fPhone2').value = c.phone2 || '';
+  document.getElementById('fBill').value = c.bill || '';
+  document.getElementById('fAccName').value = c.account_name || '';
+  document.getElementById('fBank').value = c.bank || '';
+  document.getElementById('fAccNo').value = c.account_no || '';
+  document.getElementById('fNotes').value = c.notes || '';
+}
+
+function getFormValues(){
+  return {
+    id: modalEditingId || undefined,
+    company: document.getElementById('fCompany').value.trim(),
+    area: document.getElementById('fArea').value.trim(),
+    scope: document.getElementById('fScope').value.trim(),
+    name1: document.getElementById('fName1').value.trim(),
+    phone1: document.getElementById('fPhone1').value.trim(),
+    name2: document.getElementById('fName2').value.trim(),
+    phone2: document.getElementById('fPhone2').value.trim(),
+    bill: document.getElementById('fBill').value.trim(),
+    account_name: document.getElementById('fAccName').value.trim(),
+    bank: document.getElementById('fBank').value.trim(),
+    account_no: document.getElementById('fAccNo').value.trim(),
+    notes: document.getElementById('fNotes').value.trim()
+  };
+}
+
+function submitModal(){
+  hideErr();
+  const payload = getFormValues();
+  fetch(API_BASE + '/api/contacts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(r => r.json().catch(() => null).then(j => ({ ok: r.ok, json: j })))
+    .then(({ ok, json }) => {
+      if(!ok || !json || json.ok !== true){
+        throw new Error((json && json.error) ? json.error : 'บันทึกไม่สำเร็จ');
+      }
+      closeModal();
+      loadFromSheet();
+    })
+    .catch((err) => showErr('บันทึกไม่สำเร็จ', String(err && err.message ? err.message : err)));
+}
+
+// INIT — auto-sync on page load
+loadFromSheet();
+</script>
+</body>
+</html>
