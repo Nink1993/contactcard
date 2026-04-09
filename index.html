@@ -110,6 +110,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f9;color:#222;font-size:13px}
 .table-container {
   padding: 16px 20px;
   overflow-x: auto;
+  width: 100%;
 }
 .data-table {
   width: 100%;
@@ -118,11 +119,14 @@ body{font-family:Arial,sans-serif;background:#f4f6f9;color:#222;font-size:13px}
   border-radius: 12px;
   overflow: hidden;
   font-size: 12px;
+  table-layout: auto;
 }
 .data-table th, .data-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #eee;
+  white-space: normal;
+  word-break: break-word;
 }
 .data-table th {
   background: #f8faff;
@@ -133,6 +137,11 @@ body{font-family:Arial,sans-serif;background:#f4f6f9;color:#222;font-size:13px}
 }
 .data-table tr:hover {
   background: #fcfdff;
+}
+
+#grid.table-active {
+  display: block;
+  padding: 0;
 }
 
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
@@ -738,6 +747,12 @@ function render(){
   const scopeF = document.getElementById('filterScope').value;
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
+  
+  if (currentView === 'table') {
+    grid.classList.add('table-active');
+  } else {
+    grid.classList.remove('table-active');
+  }
 
   const filtered = currentData.filter(c => {
     const matchArea = areaMatch(c.area, areaF);
