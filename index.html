@@ -379,6 +379,13 @@ const LOCAL_DATA = [
 
 let currentData = [...LOCAL_DATA];
 let currentView = 'grid';
+let modalEditingId = null;
+
+// Multi-select persistence
+let customOptions = {
+  area: JSON.parse(localStorage.getItem('custom_areas') || '["58 Place", "Empire Place", "Maxim Pattaya", "All Area"]'),
+  scope: JSON.parse(localStorage.getItem('custom_scopes') || '["ช่างแอร์", "ช่างประปา", "งานไฟฟ้า", "Cleaning"]')
+};
 
 function updateFilterDropdowns() {
   const areaSelect = document.getElementById('filterArea');
