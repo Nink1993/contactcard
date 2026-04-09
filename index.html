@@ -69,6 +69,72 @@ body{font-family:Arial,sans-serif;background:#f4f6f9;color:#222;font-size:13px}
 .icon-btn:hover{background:#dde8ff}
 .icon-btn.danger{background:#ffebee;color:#b71c1c;border-color:#ffcdd2}
 .icon-btn.danger:hover{background:#ffcdd2}
+
+/* Filter styles */
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 12px;
+  outline: none;
+  background: #fff;
+}
+.view-toggle {
+  display: flex;
+  background: #eee;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.view-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  background: transparent;
+  color: #666;
+}
+.view-btn.active {
+  background: #fff;
+  color: #1B3A6B;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Table View styles */
+.table-container {
+  padding: 16px 20px;
+  overflow-x: auto;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.data-table th, .data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+.data-table th {
+  background: #f8faff;
+  color: #1B3A6B;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.data-table tr:hover {
+  background: #fcfdff;
+}
+
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
 .modal{background:#fff;border-radius:12px;max-width:520px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.2);border:1px solid #e0e7ff;overflow:hidden}
 .modal-head{padding:12px 14px;background:#1B3A6B;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -184,12 +250,19 @@ body{font-family:Arial,sans-serif;background:#f4f6f9;color:#222;font-size:13px}
 
 <div class="toolbar">
   <input type="text" id="searchInput" placeholder="ค้นหาชื่อ บริษัท เบอร์โทร หรืองาน..." oninput="render()">
+  <div class="filter-group">
+    <label style="font-size:11px; font-weight:700; color:#1B3A6B">Area:</label>
+    <select id="filterArea" class="filter-select" onchange="render()"></select>
+  </div>
+  <div class="filter-group">
+    <label style="font-size:11px; font-weight:700; color:#1B3A6B">Scope:</label>
+    <select id="filterScope" class="filter-select" onchange="render()"></select>
+  </div>
+  <div class="view-toggle">
+    <button id="gridBtn" class="view-btn active" onclick="setView('grid')">Grid</button>
+    <button id="tableBtn" class="view-btn" onclick="setView('table')">Table</button>
+  </div>
   <button class="action-btn" onclick="openCreate()">＋ เพิ่มรายการ</button>
-  <button class="filter-btn on" data-area="all" onclick="setArea('all',this)">ทั้งหมด</button>
-  <button class="filter-btn" data-area="58 Place" onclick="setArea('58 Place',this)">58 Place</button>
-  <button class="filter-btn" data-area="Empire Place" onclick="setArea('Empire Place',this)">Empire Place</button>
-  <button class="filter-btn" data-area="Maxim Pattaya" onclick="setArea('Maxim Pattaya',this)">Maxim Pattaya</button>
-  <button class="filter-btn" data-area="All Area" onclick="setArea('All Area',this)">All Area</button>
   <span class="count-label" id="countLabel">0 รายการ</span>
 </div>
 
@@ -305,18 +378,40 @@ const LOCAL_DATA = [
 ];
 
 let currentData = [...LOCAL_DATA];
-let currentArea = 'all';
-let modalEditingId = null;
+let currentView = 'grid';
 
-// Multi-select persistence
-let customOptions = {
-  area: JSON.parse(localStorage.getItem('custom_areas') || '["58 Place", "Empire Place", "Maxim Pattaya", "All Area"]'),
-  scope: JSON.parse(localStorage.getItem('custom_scopes') || '["ช่างแอร์", "ช่างประปา", "งานไฟฟ้า", "Cleaning"]')
-};
+function updateFilterDropdowns() {
+  const areaSelect = document.getElementById('filterArea');
+  const scopeSelect = document.getElementById('filterScope');
+  
+  const selectedArea = areaSelect.value || 'all';
+  const selectedScope = scopeSelect.value || 'all';
+
+  areaSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
+  customOptions.area.forEach(a => {
+    areaSelect.innerHTML += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`;
+  });
+  
+  scopeSelect.innerHTML = '<option value="all">ทั้งหมด</option>';
+  customOptions.scope.forEach(s => {
+    scopeSelect.innerHTML += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+  });
+
+  areaSelect.value = selectedArea;
+  scopeSelect.value = selectedScope;
+}
+
+function setView(view) {
+  currentView = view;
+  document.getElementById('gridBtn').classList.toggle('active', view === 'grid');
+  document.getElementById('tableBtn').classList.toggle('active', view === 'table');
+  render();
+}
 
 function saveCustomOptions() {
   localStorage.setItem('custom_areas', JSON.stringify(customOptions.area));
   localStorage.setItem('custom_scopes', JSON.stringify(customOptions.scope));
+  updateFilterDropdowns();
 }
 
 function focusInput(id) {
@@ -623,14 +718,24 @@ function copyText(text, btn){
   }
 }
 
+function scopeMatch(contactScope, filterScope){
+  if(filterScope === 'all') return true;
+  if(!contactScope) return false;
+  const parts = contactScope.split(',').map(s => s.trim().toLowerCase());
+  return parts.includes(filterScope.toLowerCase());
+}
+
 function render(){
   const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const areaF = document.getElementById('filterArea').value;
+  const scopeF = document.getElementById('filterScope').value;
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
 
   const filtered = currentData.filter(c => {
-    const matchArea = areaMatch(c.area, currentArea);
-    if(!matchArea) return false;
+    const matchArea = areaMatch(c.area, areaF);
+    const matchScope = scopeMatch(c.scope, scopeF);
+    if(!matchArea || !matchScope) return false;
     if(!q) return true;
     const haystack = [c.company, c.area, c.scope, c.name1, c.phone1,
                       c.name2, c.phone2, c.notes].join(' ').toLowerCase();
@@ -644,6 +749,14 @@ function render(){
     return;
   }
 
+  if (currentView === 'table') {
+    renderTable(filtered, grid);
+  } else {
+    renderGrid(filtered, grid);
+  }
+}
+
+function renderGrid(filtered, grid) {
   filtered.forEach((c, idx) => {
     const av = getAvatar(c);
     const hasBank = c.bank || c.account_no || c.account_name;
@@ -723,6 +836,45 @@ function render(){
     card.innerHTML = headHtml + bodyHtml + footHtml;
     grid.appendChild(card);
   });
+}
+
+function renderTable(filtered, grid) {
+  const container = document.createElement('div');
+  container.className = 'table-container';
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Area</th>
+          <th>Scope</th>
+          <th>Contact 1</th>
+          <th>Phone 1</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  filtered.forEach(c => {
+    html += `
+      <tr>
+        <td style="font-weight:700; color:#1B3A6B">${escapeHtml(c.company || '—')}</td>
+        <td>${c.area ? '<span class="area-badge">' + escapeHtml(c.area) + '</span>' : '—'}</td>
+        <td>${escapeHtml(c.scope || '—')}</td>
+        <td>${escapeHtml(c.name1 || '—')}</td>
+        <td>${c.phone1 ? escapeHtml(c.phone1) + ' ' + phoneLink(c.phone1) : '—'}</td>
+        <td>
+          ${c.id ? `
+            <button class="icon-btn" onclick="openEdit('${escapeJsString(c.id)}')">แก้ไข</button>
+            <button class="icon-btn danger" onclick="deleteById('${escapeJsString(c.id)}')">ลบ</button>
+          ` : '—'}
+        </td>
+      </tr>
+    `;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  grid.appendChild(container);
 }
 
 function openCreate(){
@@ -827,6 +979,7 @@ function submitModal(){
 }
 
 // INIT — auto-sync on page load
+updateFilterDropdowns();
 loadFromSheet();
 </script>
 </body>
